@@ -1,8 +1,15 @@
 import os
 
-
 from flask import Flask
 from flask import request
+
+from flask import render_template
+
+todo_store = {}
+todo_store['shivang'] = ['Wake Up', 'Drink Coffee', 'Read Non-fiction Novel'] 
+todo_store['shubham'] = ['Wake Up', 'Drink Coffee', 'Read']
+todo_store['saurabh'] = ['Wake Up', 'Drink Coffee', 'Read']
+todo_store['juhi']    = ['dancing', 'cooking']
 
 def create_app(test_config=None):
     # create and configure the app
@@ -14,29 +21,25 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    def select_todos(name) :
+        global todo_store
+        return todo_store[name]
 
+    def insert_todo(name, todo):
+      global todo_store
+      current_todos = todo_store[name]
+      current_todos.append(todo)
+      todo_store[name] = current_todos 
 
-    def todo_view(todos):
-        the_view = 'List of my Todos' + '<br>'
-        for todo in todos:
-            the_view += (todo + '<br>')
-
-        the_view += ('--End--')
-        return the_view
-
+    def add_todo_by_name(name, todo):
+      insert_todo(name, todo)
+      return
    
-    def get_todo_by_name(name) :
-       if name == 'shivang':
-        return ['Wake Up', 'Drink Coffee', 'Read Non-fiction Novel']      
-       elif name == 'shubham':
-        return ['Wake Up', 'Drink Coffee', 'Read']
-       elif name == 'saurabh':
-        return ['Wake Up', 'Drink Coffee', 'Read']
-       elif name == 'juhi' :
-        return ['dancing', 'cooking']
-       else :
-        return []
-
+    def get_todo_by_name(name):
+      try:
+       return select_todos(name)
+      except:
+       return None
 
     @app.route('/todos')
     def todos():
@@ -46,6 +49,18 @@ def create_app(test_config=None):
        print('----')
 
        person_todo_list = get_todo_by_name(name)
-       return todo_view(person_todo_list) 
+
+       if(person_todo_list == None):
+        return render_template('404.html'),404
+       else:
+        return render_template('todo_view.html',todos=person_todo_list)
+
+    @app.route('/add_todos')
+    def add_todos():
+        name = request.args.get('name')
+        todo = request.args.get('todo')
+        add_todo_by_name(name, todo)
+
+        return 'Added Successfully'
 
     return app
